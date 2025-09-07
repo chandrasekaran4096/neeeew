@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AJAX Table Example with Vanilla JS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center pt-10">
+
+  <h2 class="text-2xl font-bold mb-6 text-gray-700">Users Table from Dummy API</h2>
+
+  <div class="overflow-x-auto shadow-lg rounded-lg w-4/5">
+    <table id="userTable" class="min-w-full bg-white rounded-lg">
+      <thead class="bg-gray-200 text-gray-700 uppercase text-sm">
+        <tr>
+          <th class="py-3 px-6 text-left">ID</th>
+          <th class="py-3 px-6 text-left">Name</th>
+          <th class="py-3 px-6 text-left">Email</th>
+          <th class="py-3 px-6 text-left">City</th>
+        </tr>
+      </thead>
+      <tbody class="text-gray-600 text-sm divide-y divide-gray-200">
+        <!-- Data from API will come here -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Create AJAX request
+    const xhr = new XMLHttpRequest();
+
+    // Open GET request
+    xhr.open("GET", "https://jsonplaceholder.typicode.com/users", true);
+
+    // When request loads successfully
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText); // Convert JSON string → JS array
+        let rows = "";
+
+        data.forEach(user => {
+          rows += `
+            <tr class="hover:bg-gray-100 transition">
+              <td class="py-3 px-6">${user.id}</td>
+              <td class="py-3 px-6">${user.name}</td>
+              <td class="py-3 px-6">${user.email}</td>
+              <td class="py-3 px-6">${user.address.city}</td>
+            </tr>
+          `;
+        });
+
+        document.querySelector("#userTable tbody").innerHTML = rows;
+      } else {
+        alert("Failed to fetch data! Status: " + xhr.status);
+      }
+    };
+
+    // If error occurs
+    xhr.onerror = function() {
+      alert("Request failed.");
+    };
+
+    // Send the request
+    xhr.send();
+  </script>
+
+</body>
+</html>
