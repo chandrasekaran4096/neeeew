@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Form</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-purple-600 min-h-screen flex flex-col items-center p-10">
+
+  <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-2xl">
+    <h2 id="welcomeMsg" class="text-2xl font-bold text-blue-600 mb-2 text-center"></h2>
+    <h3 class="text-lg text-gray-600 mb-6 text-center">User Registration</h3>
+
+    <form id="userForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <input type="text" id="name" placeholder="Full Name" required class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="email" id="email" placeholder="Email" required class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="number" id="phone" placeholder="Phone" required class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="date" id="dob" required class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+      <select id="gender" required class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none">
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+      <textarea id="address" placeholder="Address"class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400 outline-none col-span-2"></textarea>
+      <button type="submit"  class="col-span-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg shadow">
+        Save
+      </button>
+    </form>
+  </div>
+
+  <div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-4xl mt-10">
+    <h3 class="text-xl font-bold text-blue-600 mb-4">Stored Data</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-gray-300 text-sm">
+        <thead class="bg-blue-500 text-white">
+          <tr>
+            <th class="p-2 border">Name</th>
+            <th class="p-2 border">Email</th>
+            <th class="p-2 border">Phone</th>
+            <th class="p-2 border">DOB</th>
+            <th class="p-2 border">Gender</th>
+            <th class="p-2 border">Address</th>
+            <th class="p-2 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="dataTableBody" class="text-center"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
