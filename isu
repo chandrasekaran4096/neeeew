@@ -1,0 +1,381 @@
+cartapiservlet.java
+
+package com.bite.controller;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import com.bite.model.CartItem;
+import com.bite.model.ResponseMessage;
+import com.bite.model.User;
+import com.bite.service.CartService;
+import com.bite.util.RequestBodyParser;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+
+public class CartApiServlet extends HttpServlet {
+    private final CartService service = new CartService();
+    private final Gson gson = new Gson();
+
+    // GET /api/cart
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        HttpSession session = req.getSession(false);
+        resp.setContentType("application/json");
+        if(session == null || session.getAttribute("user") == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"error\":\"Not authenticated\"}");
+            return;
+        }
+        User user = (User) session.getAttribute("user");
+        int userId = user.getUserId();
+        List<CartItem> list = service.getCartForUser(userId);
+        resp.getWriter().write(gson.toJson(list));
+    }
+
+    // POST for add/update/delete
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    	System.out.println("message from cart servlet");
+        String path = req.getParameter("action"); // /add or /update or /delete
+        System.out.println(path);
+        //if (path == null) path = "/";
+
+        HttpSession session = req.getSession(false);
+        resp.setContentType("application/json");
+        if(session == null || session.getAttribute("user") == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"error\":\"Not authenticated\"}");
+            return;
+        }
+        User user = (User) session.getAttribute("user");
+        int userId =user.getUserId();
+        JsonObject body = RequestBodyParser.ParseJson(req);
+        
+
+//        BufferedReader reader = req.getReader();
+//        StringBuilder sb = new StringBuilder();
+//        String line;
+//        while ((line = reader.readLine()) != null) sb.append(line);
+//        JsonObject body = sb.length() > 0 ? JsonParser.parseString(sb.toString()).getAsJsonObject() : new JsonObject();
+
+        Map<String,Object> out = new HashMap<>();
+        //ResponseMessage<T> out = new ResponseMessage<T>();
+
+        try {
+            switch (path) {
+                case "add":
+                	System.out.println("Inside add case");
+                    int menuId = body.get("menu_id").getAsInt();
+                    System.out.println("menu id: "+menuId);
+                    int qty = body.has("quantity") ? body.get("quantity").getAsInt() : 1;
+                    System.out.println("quantity"+qty);
+                    boolean replace = body.has("replace") && body.get("replace").getAsBoolean();
+
+                    int cartRestId = service.getCartRestaurantId(userId);
+                    int menuRestId = service.getRestaurantIdByMenu(menuId);
+
+                    if (cartRestId != -1 && cartRestId != menuRestId && !replace) {
+                        // conflict
+                        out.put("success", false);
+                        out.put("conflict", true);
+                        out.put("message", "Your cart has items from another restaurant. Replace?");
+                        resp.getWriter().write(gson.toJson(out));
+                        return;
+                    }
+
+                    if (cartRestId != -1 && cartRestId != menuRestId && replace) {
+                        service.clearCart(userId);
+                    }
+
+                    boolean added = service.addOrIncrement(userId, menuId, qty);
+                    out.put("success", added);
+                    out.put("message", added ? "Added to cart" : "Failed to add");
+                    resp.getWriter().write(gson.toJson(out));
+                    break;
+
+                case "update":
+                    int cartId = body.get("cart_id").getAsInt();
+                    int newQty = body.get("quantity").getAsInt();
+                    boolean upd = service.updateQuantity(cartId, newQty);
+                    out.put("success", upd);
+                    resp.getWriter().write(gson.toJson(out));
+                    break;
+
+                case "delete":
+                    int cartIdDel = body.get("cart_id").getAsInt();
+                    boolean deleted = service.deleteCartItem(cartIdDel);
+                    out.put("success", deleted);
+                    resp.getWriter().write(gson.toJson(out));
+                    break;
+
+                default:
+                	System.out.println("cool");
+                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    resp.getWriter().write("{\"success\":false, \"message\":\"Bad endpoint\"}");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            resp.setStatus(500);
+            resp.getWriter().write("{\"success\":false, \"message\":\"Server error\"}");
+        }
+    }
+}
+
+CartDAO.java
+package com.bite.dao;
+
+import java.sql.*;
+import java.util.*;
+
+import com.bite.model.CartItem;
+import com.bite.util.DBConnection;
+
+public class CartDAO {
+
+    public List<CartItem> getCartByUser(int userId) {
+        List<CartItem> list = new ArrayList<>();
+        String sql = "SELECT c.cart_id, c.userid, c.menu_id, c.quantity, m.item_name, m.price, m.img, m.restaurant_id, r.name " +
+                     "FROM food.M_D_CART c JOIN food.M_D_MENU m ON c.menu_id = m.menu_id JOIN food.M_D_RESTAURANT r on m.restaurant_id=r.restaurant_id " +
+                     "WHERE c.userid = ? AND c.is_deleted = 0";
+
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                CartItem it = new CartItem();
+                it.setCartId(rs.getInt("cart_id"));
+                it.setUserId(rs.getInt("userid"));
+                it.setMenuId(rs.getInt("menu_id"));
+                it.setQuantity(rs.getInt("quantity"));
+                it.setItemName(rs.getString("item_name"));
+                it.setPrice(rs.getDouble("price"));
+                it.setImagePath(rs.getString("img"));
+                it.setRestaurantId(rs.getInt("restaurant_id"));
+                it.setRestaurantName(rs.getString("name"));
+                list.add(it);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int getCartRestaurantId(int userId) {
+        String sql = "SELECT TOP 1 m.restaurant_id FROM food.M_D_CART c JOIN food.M_D_MENU m ON c.menu_id = m.menu_id " +
+                     "WHERE c.userid = ? AND c.is_deleted = 0";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return -1;
+    }
+
+    public boolean addOrIncrementCartItem(int userId, int menuId, int quantity) {
+        // if exists incrementoterwise  insert
+        String checkSql = "SELECT cart_id, quantity FROM food.M_D_CART WHERE userid = ? AND menu_id = ? AND is_deleted = 0";
+        String insertSql = "INSERT INTO food.M_D_CART(userid, menu_id, quantity) VALUES(?,?,?)";
+        String updateSql = "UPDATE food.M_D_CART SET quantity = quantity + ?, updated_at = GETDATE() WHERE cart_id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement check = con.prepareStatement(checkSql)) {
+            check.setInt(1, userId); check.setInt(2, menuId);
+            ResultSet rs = check.executeQuery();
+            if (rs.next()) {
+                int cartId = rs.getInt("cart_id");
+                try (PreparedStatement upd = con.prepareStatement(updateSql)) {
+                    upd.setInt(1, quantity);
+                    upd.setInt(2, cartId);
+                    upd.executeUpdate();
+                }
+            } else {
+                try (PreparedStatement ins = con.prepareStatement(insertSql)) {
+                    ins.setInt(1, userId);
+                    ins.setInt(2, menuId);
+                    ins.setInt(3, quantity);
+                    ins.executeUpdate();
+                }
+            }
+            return true;
+        } 
+        catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public boolean clearCartForUser(int userId) {
+        String sql = "UPDATE SQLTraining.food.M_D_CART SET is_deleted = 1, updated_at = GETDATE() WHERE userid = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public boolean updateQuantity(int cartId, int quantity) {
+        String sql = "UPDATE food.M_D_CART SET quantity = ?, updated_at = GETDATE() WHERE cart_id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, cartId);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public boolean softDeleteCartItem(int cartId) {
+        String sql = "UPDATE food.M_D_CART SET is_deleted = 1, updated_at = GETDATE() WHERE cart_id = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, cartId);
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
+
+    public int getRestaurantIdByMenu(int menuId) {
+        String sql = "SELECT restaurant_id FROM food.M_D_MENU WHERE menu_id = ? AND is_deleted = 0";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, menuId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("restaurant_id");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return -1;
+    }
+
+    // for updating totals
+    public double getMenuPrice(int menuId) {
+        String sql = "SELECT price FROM food.M_D_MENU WHERE menu_id = ? AND is_deleted = 0";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, menuId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getDouble("price");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0.0;
+    }
+}
+CartService.java
+package com.bite.service;
+
+import java.util.List;
+
+import com.bite.dao.CartDAO;
+import com.bite.model.CartItem;
+
+public class CartService {
+    private final CartDAO dao = new CartDAO();
+
+    public List<CartItem> getCartForUser(int userId) {
+        return dao.getCartByUser(userId);
+    }
+
+    public int getCartRestaurantId(int userId) {
+        return dao.getCartRestaurantId(userId);
+    }
+
+    public boolean addOrIncrement(int userId, int menuId, int qty) {
+        return dao.addOrIncrementCartItem(userId, menuId, qty);
+    }
+
+    public boolean clearCart(int userId) {
+        return dao.clearCartForUser(userId);
+    }
+
+    public boolean updateQuantity(int cartId, int qty) {
+        return dao.updateQuantity(cartId, qty);
+    }
+
+    public boolean deleteCartItem(int cartId) {
+        return dao.softDeleteCartItem(cartId);
+    }
+
+    public int getRestaurantIdByMenu(int menuId) {
+        return dao.getRestaurantIdByMenu(menuId);
+    }
+
+    public double getMenuPrice(int menuId) { 
+    	return dao.getMenuPrice(menuId); 
+    	}
+}
+
+reorderServlet.java
+package com.bite.controller;
+
+import com.bite.service.OrderService;
+import javax.servlet.http.*;
+import java.io.IOException;
+
+public class ReorderServlet extends HttpServlet {
+    private final OrderService orderService = new OrderService();
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        resp.setContentType("application/json");
+
+        int orderId = Integer.parseInt(req.getParameter("orderId"));
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("user") == null) {
+            resp.getWriter().write("{\"success\":false}");
+            return;
+        }
+
+        int userId = ((com.bite.model.User) session.getAttribute("user")).getUserId();
+        boolean success = orderService.reorder(userId, orderId);
+        resp.getWriter().write("{\"success\":" + success + "}");
+    }
+}
+
+in menu.js
+
+  $(document).on("click", ".add-btn", function () {
+    const menuId = $(this).data("id"); 
+  $.ajax({
+    url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=add",
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({ menu_id: menuId, quantity: 1 }),
+    success: function(res) {
+      if (res.conflict) {
+        if (confirm(res.message || "Replace cart with items from this restaurant?")) {
+          // retry with replace=true
+          $.ajax({
+            url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=add",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ menu_id: menuId, quantity: 1, replace: true }),
+            success: function(r2) {
+              alert(r2.success ? "Added to cart (replaced)." : "Failed to add.");
+            }
+          });
+        }
+      } else {
+        alert(res.success ? "Added to cart" : res.message || "Failed to add");
+      }
+    }
+  });
+
+when i add menus from menu page it works well like if cart has different restaurant it ask and replace but throug orders page if i click re order it directly  added even though different restaurant items is there 
+
+                                                                                                                                                      
