@@ -378,4 +378,173 @@ in menu.js
 
 when i add menus from menu page it works well like if cart has different restaurant it ask and replace but throug orders page if i click re order it directly  added even though different restaurant items is there 
 
+
+Perfect — here’s **exactly** what you should do step-by-step 👇
+
+---
+
+## 🛠️ GOAL
+
+When the user clicks **“Reorder”**,
+✅ If their cart has items from another restaurant → ask to replace (just like menu page).
+✅ Otherwise → directly add the items.
+
+---
+
+### 🧩 Step 1 — Add a method to `OrderDAO.java`
+
+Add this helper to get the restaurant ID of an order:
+
+```java
+public int getRestaurantIdByOrder(int orderId) {
+    String sql = "SELECT TOP 1 m.restaurant_id FROM food.M_D_ORDER_ITEMS oi " +
+                 "JOIN food.M_D_MENU m ON oi.menu_id = m.menu_id " +
+                 "WHERE oi.order_id = ?";
+    try (Connection con = DBConnection.getConnection();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+        ps.setInt(1, orderId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) return rs.getInt(1);
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return -1;
+}
+```
+
+---
+
+### 🧩 Step 2 — Update `OrderService.java`
+
+Now update your reorder logic to check the restaurant:
+
+```java
+public boolean reorder(int userId, int orderId) {
+    CartDAO cartDao = new CartDAO();
+    int cartRestaurantId = cartDao.getCartRestaurantId(userId);
+    int orderRestaurantId = orderDAO.getRestaurantIdByOrder(orderId);
+
+    // Conflict handling — different restaurants
+    if (cartRestaurantId != -1 && cartRestaurantId != orderRestaurantId) {
+        // clear current cart before adding reorder items
+        cartDao.clearCartForUser(userId);
+    }
+
+    // copy order items into cart
+    return orderDAO.copyOrderItemsToCart(userId, orderId);
+}
+```
+
+✅ This ensures that:
+
+* If the cart is empty or same restaurant → just reorder.
+* If it’s a different restaurant → clears existing cart first (like replace logic).
+
+---
+
+### 🧩 Step 3 — (Optional UI Improvement)
+
+In your `order.js`, you can make it interactive (like the menu page):
+
+Replace this reorder code:
+
+```js
+$.ajax({
+  url: "http://localhost:8080/BiteBudddy/ReorderServlet",
+  method: "POST",
+  data: { orderId: id },
+  success: function (res) {
+    if (res.success) {
+      alert("Items added to your cart!");
+      window.location.href = "cart.html";
+    } else {
+      alert("Failed to reorder.");
+    }
+  }
+});
+```
+
+with this:
+
+```js
+$.ajax({
+  url: "http://localhost:8080/BiteBudddy/ReorderServlet",
+  method: "POST",
+  data: { orderId: id },
+  success: function (res) {
+    if (res.conflict) {
+      if (confirm(res.message || "Cart has items from another restaurant. Replace?")) {
+        $.ajax({
+          url: "http://localhost:8080/BiteBudddy/ReorderServlet",
+          method: "POST",
+          data: { orderId: id, replace: true },
+          success: function (r2) {
+            alert(r2.success ? "Cart replaced and items added!" : "Failed to reorder");
+            if (r2.success) window.location.href = "cart.html";
+          }
+        });
+      }
+    } else if (res.success) {
+      alert("Items added to your cart!");
+      window.location.href = "cart.html";
+    } else {
+      alert("Failed to reorder.");
+    }
+  }
+});
+```
+
+---
+
+### 🧩 Step 4 — Modify `ReorderServlet.java`
+
+Add small logic to detect “replace” from frontend and pass it down:
+
+```java
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    resp.setContentType("application/json");
+
+    int orderId = Integer.parseInt(req.getParameter("orderId"));
+    boolean replace = "true".equals(req.getParameter("replace"));
+
+    HttpSession session = req.getSession(false);
+    if (session == null || session.getAttribute("user") == null) {
+        resp.getWriter().write("{\"success\":false}");
+        return;
+    }
+
+    int userId = ((com.bite.model.User) session.getAttribute("user")).getUserId();
+
+    // Check for restaurant conflict
+    int orderRestId = orderService.getRestaurantIdByOrder(orderId);
+    int cartRestId = orderService.getCartRestaurantId(userId);
+
+    if (cartRestId != -1 && cartRestId != orderRestId && !replace) {
+        resp.getWriter().write("{\"success\":false, \"conflict\":true, \"message\":\"Your cart has items from another restaurant. Replace?\"}");
+        return;
+    }
+
+    if (cartRestId != -1 && cartRestId != orderRestId && replace) {
+        orderService.clearCart(userId);
+    }
+
+    boolean success = orderService.reorder(userId, orderId);
+    resp.getWriter().write("{\"success\":" + success + "}");
+}
+```
+
+---
+
+### ✅ Step 5 — Done!
+
+Now:
+
+* If the cart has another restaurant → user is prompted to replace.
+* If confirmed → existing cart cleared, reorder items added.
+* Otherwise → nothing changes.
+
+---
+
+Would you like me to send the **complete final versions** of these 3 files (`OrderDAO`, `OrderService`, `ReorderServlet`) ready to paste and run?
                                                                                                                                                       
