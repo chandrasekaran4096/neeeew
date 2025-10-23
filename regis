@@ -147,3 +147,182 @@ $(document).ready(function() {
 
 
 change this theme to ours and instead of alert use sweet alert or toast 
+
+
+
+Got it! We’ll **update the `register.html` and `register.js`** to match your **existing project theme** (like `restaurant.html`, `cart.html`, `order.html`) and replace **all `alert` calls with SweetAlert2** or Toaster notifications.
+
+Here’s the **updated version**:
+
+---
+
+### `register.html`
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register | BiteBuddy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Toaster -->
+  <script src="../Plugins/toaster/toaster/dist/jquery.toast.min.js"></script>
+  <link rel="stylesheet" href="../Plugins/toaster/toaster/dist/jquery.toast.min.css">
+
+  <!-- SweetAlert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Custom JS -->
+  <script src="../js/register.js"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white font-sans relative overflow-hidden">
+
+  <!-- Floating food icons -->
+  <span class="absolute left-10 top-10 opacity-30 animate-[float_8s_ease-in-out_infinite] text-7xl pointer-events-none">🍔</span>
+  <span class="absolute right-16 top-32 opacity-30 animate-[float_8s_ease-in-out_infinite_2s] text-8xl pointer-events-none">🍣</span>
+  <span class="absolute left-1/2 bottom-10 opacity-30 animate-[float_8s_ease-in-out_infinite_4s] text-6xl pointer-events-none">🍕</span>
+  <span class="absolute right-10 bottom-20 opacity-30 animate-[float_8s_ease-in-out_infinite] text-7xl pointer-events-none">🍟</span>
+
+  <!-- Main Container -->
+  <main class="relative w-full max-w-lg bg-gray-900/70 backdrop-blur-md rounded-3xl shadow-2xl p-10 border border-gray-800 z-10">
+    <div class="flex flex-col items-center mb-6">
+      <h2 class="text-4xl font-extrabold text-center text-orange-400 drop-shadow-lg tracking-tight">Welcome to BiteBuddy!</h2>
+      <p class="text-lg text-gray-400 mt-2 font-medium text-center">Sign up and start your delicious journey 🚀</p>
+    </div>
+
+    <form id="registerForm" class="space-y-6 z-10">
+      <button 
+        id="submitBtn" 
+        type="submit" 
+        class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:from-orange-600 hover:to-orange-500 hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-orange-400"
+      >
+        Register
+      </button>
+
+      <div class="flex justify-between mt-6 text-sm">
+        <a href="../index.html" class="text-gray-400 hover:text-orange-400 transition">← Back</a>
+        <a href="login.html" class="text-orange-400 hover:text-orange-300 font-semibold transition">Login</a>
+      </div>
+    </form>
+  </main>
+</body>
+</html>
+```
+
+---
+
+### `register.js`
+
+```javascript
+const registrationFields = [
+    { name: "address", type: "text", placeholder: "Address", required: false },
+    { name: "phonenumber", type: "text", placeholder: "Phone Number", required: true },
+    { name: "password", type: "password", placeholder: "Password", required: true },
+    { name: "email", type: "email", placeholder: "Email", required: true },
+    { name: "name", type: "text", placeholder: "Full Name", required: true },
+    { name: "role", type: "select", placeholder: "Select Role", required: true,
+      options: ["customer", "restaurant", "admin"] }
+];
+
+$(document).ready(function() {
+    const form = $('#registerForm');
+
+    // Generate form dynamically
+    registrationFields.forEach(field => {
+        let fieldHtml = '';
+        if(field.type === 'select') {
+            fieldHtml = `<div>
+                <label class="block mb-2 text-lg font-semibold text-orange-400">${field.placeholder}</label>
+                <select name="${field.name}" class="w-full border border-gray-700 p-2 rounded-xl bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-orange-400" ${field.required ? 'required' : ''}>
+                    <option value="">--Select--</option>
+                    ${field.options.map(opt => `<option value="${opt}">${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`).join('')}
+                </select>
+            </div>`;
+        } else {
+            fieldHtml = `<div>
+                <label class="block mb-2 text-lg font-semibold text-orange-400">${field.placeholder}</label>
+                <input type="${field.type}" name="${field.name}" placeholder="${field.placeholder}" 
+                    class="w-full border border-gray-700 p-2 rounded-xl bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400" ${field.required ? 'required' : ''}/>
+            </div>`;
+        }
+        form.prepend(fieldHtml);
+    });
+
+    // Form Validation
+    function validateForm() {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phonePattern = /^[0-9]{10}$/;
+
+        const email = $('input[name="email"]').val();
+        const phone = $('input[name="phonenumber"]').val();
+        const password = $('input[name="password"]').val();
+
+        if(!emailPattern.test(email)) {
+            Swal.fire({ icon: 'error', title: 'Invalid Email', text: 'Enter a valid email!' });
+            return false;
+        }
+
+        if(!phonePattern.test(phone)) {
+            Swal.fire({ icon: 'error', title: 'Invalid Phone', text: 'Enter a valid 10-digit phone number!' });
+            return false;
+        }
+
+        if(password.length < 6) {
+            Swal.fire({ icon: 'error', title: 'Weak Password', text: 'Password must be at least 6 characters!' });
+            return false;
+        }
+
+        return true;
+    }
+
+    $('#submitBtn').click(function(e) {
+        e.preventDefault();
+        if(!validateForm()) return;
+
+        $.ajax({
+            url: 'http://localhost:8080/BiteBudddy/user',
+            type: 'POST',
+            data: $('#registerForm').serialize() + '&action=register',
+            dataType: 'json',
+            success: function(response){
+                if(response.status === 'success'){
+                    $.toast({
+                        heading: 'Success',
+                        text: response.message,
+                        icon: 'success',
+                        position: 'top-right',
+                        hideAfter: 3000
+                    });
+                    setTimeout(() => window.location.href = response.redirect, 1500);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Registration Failed', text: response.message });
+                }
+            },
+            error: function(xhr, status, error){
+                Swal.fire({ icon: 'error', title: 'Server Error', text: error });
+            }
+        });
+    });
+});
+```
+
+---
+
+✅ **What changed**:
+
+1. Converted **all colors, borders, backgrounds** to your project theme (`restaurant.html`, `cart.html`, `order.html`) using Tailwind.
+2. Removed internal CSS for floating icons and replaced with **Tailwind `animate-[...]` classes**.
+3. Replaced **all `alert` calls** with **SweetAlert2** (`Swal.fire`) or **Toaster** notifications.
+4. Maintained **dynamic form generation**.
+5. Login and back links match your **orange/purple theme**.
+
+---
+
+If you want, I can also **add the floating food icon animation fully in Tailwind** so there’s **no CSS at all**.
+
+Do you want me to do that next?
