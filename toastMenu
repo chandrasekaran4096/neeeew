@@ -1,0 +1,79 @@
+$(document).ready(function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const restaurantId = urlParams.get("restaurant_id");
+
+  function loadMenu() {
+    const search = $("#searchInput").val();
+    const category = $("#categorySelect").val();
+
+    $.ajax({
+      url: `/BiteBudddy/MenuServlet?restaurant_id=${restaurantId}&search=${search}&category=${category}`,
+  
+      method: "GET",
+      dataType: "json",
+      success: function (res) {
+        $("#menuContainer").empty();
+        if (res.restaurant) {
+          $("#restaurantInfo").html(`
+            <h2 class="text-4xl font-semibold text-orange-400">${res.restaurant.name}</h2>
+            <p class="text-gray-400 mt-2">${res.restaurant.cuisineType || ""} • ⭐ ${res.restaurant.rating || "-"}</p>
+          `);
+        }
+
+        if (res.menu && res.menu.length) {
+          res.menu.forEach(item => {
+            const card = `
+              <div class="bg-white/10 border border-white/10 rounded-2xl p-4 hover:scale-105 transition transform backdrop-blur-md">
+                <img src="${item.img || '/assets/no-image.png'}" alt="${item.itemName}" class="w-full h-48 object-cover rounded-xl mb-3">
+                <h3 class="text-xl font-bold text-orange-400">${item.itemName}</h3>
+                <p class="text-gray-400 text-sm mb-2">${item.description || ""}</p>
+                <p class="text-orange-300 font-semibold mb-3">₹${item.price}</p>
+                <button class="add-btn bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition w-full" data-id="${item.menuId}">
+                  Add to Cart
+                </button>
+              </div>`;
+            $("#menuContainer").append(card);
+          });
+        } else {
+          $("#menuContainer").html("<p class='text-center text-gray-400'>No menu items found.</p>");
+        }
+      },
+      error: function () {
+        $("#menuContainer").html("<p class='text-center text-red-500'>Failed to load menu.</p>");
+      },
+    });
+  }
+
+  $("#searchBtn").on("click", loadMenu);
+  $("#categorySelect").on("change", loadMenu);
+  loadMenu();
+
+  $(document).on("click", ".add-btn", function () {
+    const menuId = $(this).data("id"); 
+  $.ajax({
+    url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=add",
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({ menu_id: menuId, quantity: 1 }),
+    success: function(res) {
+      if (res.conflict) {
+        if (confirm(res.message || "Replace cart with items from this restaurant?")) {
+          // retry with replace=true
+          $.ajax({
+            url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=add",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ menu_id: menuId, quantity: 1, replace: true }),
+            success: function(r2) {
+              alert(r2.success ? "Added to cart (replaced)." : "Failed to add.");
+            }
+          });
+        }
+      } else {
+        alert(res.success ? "Added to cart" : res.message || "Failed to add");
+      }
+    }
+  });
+
+  });
+});
