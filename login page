@@ -180,3 +180,74 @@ Here’s your **updated `login.html`** redesigned to **match your BiteBuddy mode
 ---
 
 Would you like me to similarly **redesign the Register page** to match this exact theme and style too?
+
+
+Perfect! 😎 We can do **100% Tailwind**, no internal CSS needed. Here's a fully styled `login.html` using only Tailwind classes and matching your BiteBuddy theme (glass + orange highlights + modern vibe):
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BiteBuddy Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Toaster -->
+  <script src="../Plugins/toaster/toaster/dist/jquery.toast.min.js"></script>
+  <link rel="stylesheet" href="../Plugins/toaster/toaster/dist/jquery.toast.min.css">
+
+  <script src="../js/login.js"></script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-100 via-pink-100 to-red-200">
+
+  <main class="w-full max-w-md p-10 rounded-3xl bg-white/20 backdrop-blur-xl shadow-2xl border border-white/20">
+    <h2 class="text-4xl font-extrabold mb-8 text-center text-orange-400 drop-shadow-lg">Hi Buddy</h2>
+
+    <form id="loginForm" class="space-y-6">
+      <input 
+        type="email" 
+        name="email" 
+        placeholder="Email" 
+        required
+        class="w-full px-5 py-3 rounded-xl border-2 border-purple-300 bg-white/50 backdrop-blur-md text-lg focus:outline-none focus:ring-4 focus:ring-orange-400 transition"
+      >
+      <input 
+        type="password" 
+        name="password" 
+        placeholder="Password" 
+        required
+        class="w-full px-5 py-3 rounded-xl border-2 border-purple-300 bg-white/50 backdrop-blur-md text-lg focus:outline-none focus:ring-4 focus:ring-orange-400 transition"
+      >
+
+      <button 
+        type="submit" 
+        class="w-full bg-orange-500 text-white py-3 rounded-xl font-bold text-lg shadow-lg hover:bg-orange-600 transition"
+      >
+        Login
+      </button>
+
+      <div class="flex justify-between mt-6 text-sm">
+        <a href="../index.html" class="text-purple-600 font-semibold hover:underline">Back</a>
+        <a href="register.html" class="text-purple-600 font-semibold hover:underline">Register</a>
+      </div>
+    </form>
+  </main>
+
+</body>
+</html>
+```
+
+✅ **Features**:
+
+* Full **Tailwind** classes.
+* **Glassmorphism** effect using `bg-white/20` + `backdrop-blur-xl`.
+* Modern **orange accent buttons** for BiteBuddy theme.
+* Rounded corners `rounded-3xl` and shadow `shadow-2xl` for card feel.
+* Focus effect with `focus:ring-4 focus:ring-orange-400`.
+
+No internal CSS, fully Tailwind-based and ready for production.
+
+If you want, I can also **add SweetAlert/Toasts for login success/failure** integrated directly into this page.
+
+Do you want me to add that too?
