@@ -1,0 +1,73 @@
+package com.bite.controller;
+import javax.servlet.*;
+import javax.servlet.http.*;
+import javax.servlet.annotation.*;
+import java.io.*;
+import com.bite.service.UserService;
+import com.google.gson.Gson;
+import com.bite.model.User;
+import com.bite.model.ResponseMessage;
+
+
+public class UserServlet extends HttpServlet {
+
+    private UserService userService;
+    private Gson gson = new Gson();
+    @Override
+    public void init() {
+        userService = new UserService();
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+        String action = request.getParameter("action");
+        ResponseMessage<?> resp;
+
+        try {
+            if("register".equalsIgnoreCase(action)) {
+                String name = request.getParameter("name");
+                String email = request.getParameter("email");
+                String phone = request.getParameter("phonenumber");
+                String address = request.getParameter("address");
+                String password = request.getParameter("password");
+                String role = request.getParameter("role");
+
+                resp = userService.registerUser(name, email, phone, address, password, role);
+
+            } else if("login".equalsIgnoreCase(action)) {
+                String email = request.getParameter("email");
+                String password = request.getParameter("password");
+                User user = userService.loginUser(email, password);
+                if(user != null) {
+                    HttpSession session = request.getSession();
+                    session.setAttribute("user", user);
+                    String redirectPage = "restaurant.html";
+                    if("admin".equalsIgnoreCase(user.getRole())) {
+                    	redirectPage = "admin.html";
+                    }
+                    else if("restaurant".equalsIgnoreCase(user.getRole())) {
+                    	redirectPage = "restaurantowner.html";
+                    }
+
+                    resp = new ResponseMessage<>("success", "Login successful", redirectPage, user);
+                }
+                else {
+                    resp = new ResponseMessage<>("error", "Invalid credentials");
+                }
+            }
+            else {
+                resp = new ResponseMessage<>("error", "Invalid action");
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            resp = new ResponseMessage<>("error", "Server error: " + e.getMessage());
+        }
+        out.print(gson.toJson(resp));
+        out.flush();
+    }
+}
+
+
+from front end user clicks logout button we should log out so use this servlet update it give that front end also
