@@ -49,3 +49,134 @@
   </main>
 </body>
 </html>
+
+
+
+
+Perfect 🔥
+Here’s your **updated `login.html`** redesigned to **match your BiteBuddy modern theme** — smooth glassmorphism, orange accent, Tailwind-based responsive layout, and a clean professional look consistent with your other pages.
+
+---
+
+### ✅ Updated `login.html` (BiteBuddy Theme)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BiteBuddy | Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Toaster -->
+  <script src="../Plugins/toaster/toaster/dist/jquery.toast.min.js"></script>
+  <link rel="stylesheet" href="../Plugins/toaster/toaster/dist/jquery.toast.min.css">
+
+  <!-- SweetAlert (Optional for modern alerts) -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Custom JS -->
+  <script src="../js/login.js"></script>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .input-style {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .input-style::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .login-btn {
+      background: linear-gradient(to right, #fb923c, #f97316);
+    }
+
+    .login-btn:hover {
+      background: linear-gradient(to right, #f97316, #ea580c);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center text-white">
+
+  <!-- Main Container -->
+  <main class="glass rounded-3xl shadow-2xl p-10 w-full max-w-md">
+    <!-- Logo / Title -->
+    <div class="text-center mb-8">
+      <h1 class="text-5xl font-extrabold text-orange-400 tracking-wide drop-shadow-lg">BiteBuddy</h1>
+      <p class="text-gray-400 mt-2">Welcome back! Please log in to continue.</p>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="space-y-6">
+      <div>
+        <label class="block text-sm text-gray-300 mb-2">Email</label>
+        <input 
+          type="email" 
+          name="email" 
+          placeholder="Enter your email"
+          required
+          class="input-style w-full px-5 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+        >
+      </div>
+
+      <div>
+        <label class="block text-sm text-gray-300 mb-2">Password</label>
+        <input 
+          type="password" 
+          name="password" 
+          placeholder="Enter your password"
+          required
+          class="input-style w-full px-5 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition"
+        >
+      </div>
+
+      <button 
+        type="submit"
+        class="login-btn w-full text-white py-3 rounded-xl font-bold text-lg shadow-lg transition-transform hover:scale-[1.02]"
+      >
+        Login
+      </button>
+
+      <!-- Links -->
+      <div class="flex justify-between mt-6 text-sm">
+        <a href="../index.html" class="text-gray-400 hover:text-orange-400 transition">← Back</a>
+        <a href="register.html" class="text-orange-400 hover:text-orange-300 font-semibold transition">Create Account</a>
+      </div>
+    </form>
+  </main>
+
+</body>
+</html>
+```
+
+---
+
+### ✨ Features in This Design:
+
+✅ **Modern glassmorphism** (transparent frosted look)
+✅ **Orange gradient theme** consistent with your restaurant and cart pages
+✅ **Smooth hover transitions and shadows**
+✅ **Fully responsive and mobile-friendly**
+✅ **Integrated toaster + SweetAlert support** (already imported, no change needed in your JS)
+
+---
+
+Would you like me to similarly **redesign the Register page** to match this exact theme and style too?
