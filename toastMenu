@@ -77,3 +77,158 @@ $(document).ready(function () {
 
   });
 });
+
+
+
+Got it ✅ — you don’t want any logic or structure changes, only **replace normal alerts/confirm boxes** with beautiful **SweetAlert (Swal)** toasts and modals.
+
+Here’s your **original code** with **SweetAlert2** added (no other changes made):
+
+---
+
+### ✅ Updated Code (With SweetAlert2 + Toasts)
+
+> Add this in your `<head>` of `menu.html`
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+```
+
+Then replace your script with this:
+
+```javascript
+$(document).ready(function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const restaurantId = urlParams.get("restaurant_id");
+
+  function loadMenu() {
+    const search = $("#searchInput").val();
+    const category = $("#categorySelect").val();
+
+    $.ajax({
+      url: `/BiteBudddy/MenuServlet?restaurant_id=${restaurantId}&search=${search}&category=${category}`,
+      method: "GET",
+      dataType: "json",
+      success: function (res) {
+        $("#menuContainer").empty();
+        if (res.restaurant) {
+          $("#restaurantInfo").html(`
+            <h2 class="text-4xl font-semibold text-orange-400">${res.restaurant.name}</h2>
+            <p class="text-gray-400 mt-2">${res.restaurant.cuisineType || ""} • ⭐ ${res.restaurant.rating || "-"}</p>
+          `);
+        }
+
+        if (res.menu && res.menu.length) {
+          res.menu.forEach(item => {
+            const card = `
+              <div class="bg-white/10 border border-white/10 rounded-2xl p-4 hover:scale-105 transition transform backdrop-blur-md">
+                <img src="${item.img || '/assets/no-image.png'}" alt="${item.itemName}" class="w-full h-48 object-cover rounded-xl mb-3">
+                <h3 class="text-xl font-bold text-orange-400">${item.itemName}</h3>
+                <p class="text-gray-400 text-sm mb-2">${item.description || ""}</p>
+                <p class="text-orange-300 font-semibold mb-3">₹${item.price}</p>
+                <button class="add-btn bg-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 transition w-full" data-id="${item.menuId}">
+                  Add to Cart
+                </button>
+              </div>`;
+            $("#menuContainer").append(card);
+          });
+        } else {
+          $("#menuContainer").html("<p class='text-center text-gray-400'>No menu items found.</p>");
+        }
+      },
+      error: function () {
+        $("#menuContainer").html("<p class='text-center text-red-500'>Failed to load menu.</p>");
+      },
+    });
+  }
+
+  $("#searchBtn").on("click", loadMenu);
+  $("#categorySelect").on("change", loadMenu);
+  loadMenu();
+
+  $(document).on("click", ".add-btn", function () {
+    const menuId = $(this).data("id");
+
+    $.ajax({
+      url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=add",
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ menu_id: menuId, quantity: 1 }),
+      success: function (res) {
+        if (res.conflict) {
+          Swal.fire({
+            title: "Replace Cart?",
+            text: res.message || "Your cart contains items from another restaurant. Replace them?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, Replace",
+            cancelButtonText: "Cancel",
+            confirmButtonColor: "#f97316",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              $.ajax({
+                url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=add",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ menu_id: menuId, quantity: 1, replace: true }),
+                success: function (r2) {
+                  if (r2.success) {
+                    Swal.fire({
+                      toast: true,
+                      icon: "success",
+                      title: "Cart replaced successfully!",
+                      position: "top-end",
+                      showConfirmButton: false,
+                      timer: 2000,
+                      timerProgressBar: true
+                    });
+                  } else {
+                    Swal.fire("Error", "Failed to add item.", "error");
+                  }
+                },
+                error: function () {
+                  Swal.fire("Error", "Error replacing cart.", "error");
+                }
+              });
+            }
+          });
+        } else {
+          if (res.success) {
+            Swal.fire({
+              toast: true,
+              icon: "success",
+              title: "Item added to cart!",
+              position: "top-end",
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true
+            });
+          } else if (res.redirect) {
+            window.location.href = "/BiteBudddy/HTML/login.html";
+          } else {
+            Swal.fire("Error", res.message || "Failed to add item.", "error");
+          }
+        }
+      },
+      error: function () {
+        Swal.fire("Error", "Server error while adding item to cart.", "error");
+      }
+    });
+  });
+});
+```
+
+---
+
+### 🌟 What Changed:
+
+* `alert()` → **SweetAlert toast**
+* `confirm()` → **SweetAlert modal with Confirm/Cancel buttons**
+* Added **nice animations + top-end toast notifications** for smoother UX
+* No backend or logic changed at all ✅
+
+---
+
+Would you like me to apply the same **SweetAlert toast + modal style** to your **cart.js** file too (place order, remove item, etc.) for a consistent design?
+
+
