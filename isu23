@@ -1,0 +1,88 @@
+
+package com.bite.util;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+public class RequestBodyParser {
+	public static JsonObject ParseJson(HttpServletRequest req) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		String line;
+		try(BufferedReader reader=req.getReader()){
+			while((line=reader.readLine())!=null) {
+				sb.append(line);
+			}
+		}
+		if(sb.length()==0) {
+			return new JsonObject();
+		}
+		return JsonParser.parseString(sb.toString()).getAsJsonObject();
+	}
+}
+i have RequestBodyParser class use this in below servlet
+package com.bite.controller;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import com.bite.dao.UserDAO;
+import com.bite.model.User;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+public class UpdateUserServlet extends HttpServlet {
+    private final Gson gson = new Gson();
+    private final UserDAO dao = new UserDAO();
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        HttpSession session = req.getSession(false);
+        resp.setContentType("application/json");
+        if(session == null || session.getAttribute("user") == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"success\":false, \"message\":\"Not authenticated\"}");
+            return;
+        }
+
+//        int userid = (int) session.getAttribute("userid");
+        User user = (User) session.getAttribute("user");
+
+        // read JSON body
+        StringBuilder sb = new StringBuilder();
+        try(BufferedReader reader = req.getReader()) {
+            String line;
+            while((line = reader.readLine()) != null) sb.append(line);
+        }
+        JsonObject json = JsonParser.parseString(sb.toString()).getAsJsonObject();
+        String phonenumber = json.has("phonenumber") ? json.get("phonenumber").getAsString() : null;
+        String address = json.has("address") ? json.get("address").getAsString() : null;
+
+        // serverside validation
+        if(address == null || address.trim().isEmpty()) {
+            resp.getWriter().write("{\"success\":false, \"message\":\"Address is required\"}");
+            return;
+        }
+        if(phonenumber != null && phonenumber.length() > 15) {
+            resp.getWriter().write("{\"success\":false, \"message\":\"Invalid phone number\"}");
+            return;
+        }
+        int userid=user.getUserId();
+        boolean ok = dao.updateUserContact(userid, phonenumber, address);
+        if(ok) {
+            resp.getWriter().write("{\"success\":true}");
+        } else {
+            resp.getWriter().write("{\"success\":false, \"message\":\"Update failed\"}");
+        }
+    }
+}
