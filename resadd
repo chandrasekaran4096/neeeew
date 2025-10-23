@@ -1,0 +1,1181 @@
+t’s refactor what we built into:
+
+A clean HTML layout (restaurantDashboard.html)
+
+An external JS file (restaurantDashboard.js) that handles all logic, navigation, and dynamic content.
+
+🧾 restaurantDashboard.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant Owner Dashboard | BiteBuddy</title>
+
+  <!-- ✅ Libraries -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .sidebar {
+      transition: transform 0.3s ease-in-out;
+    }
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Navbar (Mobile) -->
+  <header class="md:hidden flex justify-between items-center bg-gray-900 text-white px-4 py-3">
+    <h1 class="text-xl font-bold text-orange-400">🍴 BiteBuddy</h1>
+    <button id="menuToggle" class="text-2xl focus:outline-none">☰</button>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar bg-gray-900 w-64 md:translate-x-0 fixed md:static inset-y-0 left-0 transform md:transform-none z-50">
+      <div class="p-4 border-b border-gray-700">
+        <h2 class="text-2xl font-semibold text-orange-400">Dashboard</h2>
+      </div>
+      <nav class="mt-6">
+        <ul class="space-y-2 px-4">
+          <li><a href="#" id="dashboardLink" class="block px-3 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition">🏠 Dashboard</a></li>
+          <li><a href="#" id="addRestaurantLink" class="block px-3 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition">➕ Add Restaurant</a></li>
+          <li><a href="#" id="myRestaurantsLink" class="block px-3 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition">🍽️ My Restaurants</a></li>
+          <li><a href="#" id="profileLink" class="block px-3 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition">👤 Profile</a></li>
+          <li><a href="#" id="logoutLink" class="block px-3 py-2 rounded-lg hover:bg-red-600 hover:text-white transition">🚪 Logout</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="mainContent" class="flex-1 p-6 md:ml-64 overflow-auto">
+      <h1 class="text-3xl font-bold text-orange-400 mb-6">Welcome Back, Restaurant Owner! 👋</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg">
+          <p class="text-2xl font-bold text-orange-400" id="totalRestaurants">3</p>
+          <p class="text-gray-400">Total Restaurants</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg">
+          <p class="text-2xl font-bold text-orange-400" id="totalRevenue">₹25,400</p>
+          <p class="text-gray-400">Total Revenue</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg">
+          <p class="text-2xl font-bold text-orange-400" id="totalOrders">158</p>
+          <p class="text-gray-400">Total Orders</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ✅ External JS file -->
+  <script src="../JS/restaurantDashboard.js"></script>
+</body>
+</html>
+
+⚙️ restaurantDashboard.js
+// Sidebar toggle for mobile
+$("#menuToggle").on("click", function() {
+  $("#sidebar").toggleClass("hidden");
+});
+
+// Default Dashboard Content
+function loadDashboard() {
+  $("#mainContent").html(`
+    <h1 class="text-3xl font-bold text-orange-400 mb-6">Dashboard Overview</h1>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg">
+        <p class="text-2xl font-bold text-orange-400" id="totalRestaurants">3</p>
+        <p class="text-gray-400">Total Restaurants</p>
+      </div>
+      <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg">
+        <p class="text-2xl font-bold text-orange-400" id="totalRevenue">₹25,400</p>
+        <p class="text-gray-400">Total Revenue</p>
+      </div>
+      <div class="bg-gray-800 rounded-2xl p-6 text-center shadow-lg">
+        <p class="text-2xl font-bold text-orange-400" id="totalOrders">158</p>
+        <p class="text-gray-400">Total Orders</p>
+      </div>
+    </div>
+  `);
+}
+
+// Logout logic with SweetAlert + Toast
+$("#logoutLink").on("click", function() {
+  Swal.fire({
+    title: "Logout?",
+    text: "Are you sure you want to logout?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Logout",
+    confirmButtonColor: "#f97316"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Toastify({
+        text: "Logged out successfully!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#f97316",
+      }).showToast();
+
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1000);
+    }
+  });
+});
+
+// Navigation Links
+$("#dashboardLink").on("click", loadDashboard);
+
+// Default load dashboard on page ready
+$(document).ready(function() {
+  loadDashboard();
+});
+
+
+✅ Benefits of this setup:
+
+Easy to maintain and scale.
+
+Keeps logic out of HTML.
+
+Allows modular development (we’ll add addRestaurantSection(), showMyRestaurants(), etc. next in this JS file).
+
+Would you like me to now continue with Step 2 — Add New Restaurant (form + backend Servlet + Service + DAO + Model)?
+
+You said:
+yes 
+ChatGPT said:
+
+Perfect 🔥
+Now we’ll implement Step 2 — Add New Restaurant
+We’ll create:
+
+✅ Front-end (form inside dashboard) — Tailwind responsive UI
+
+✅ AJAX + Toast + SweetAlert logic
+
+✅ Back-end layers → Model + DAO + Service + Servlet
+
+🧱 Step 2.1 — Update restaurantDashboard.js
+
+Add this below the existing code:
+
+// ✅ Load Add Restaurant Form
+function loadAddRestaurantForm() {
+  $("#mainContent").html(`
+    <h2 class="text-3xl font-bold text-orange-400 mb-6">Add New Restaurant 🍽️</h2>
+    <form id="addRestaurantForm" class="bg-gray-800 p-8 rounded-2xl shadow-lg max-w-2xl mx-auto space-y-6">
+      
+      <div>
+        <label class="block text-gray-300 mb-2">Restaurant Name</label>
+        <input type="text" name="name" required placeholder="Enter restaurant name"
+          class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-400">
+      </div>
+
+      <div>
+        <label class="block text-gray-300 mb-2">Address</label>
+        <textarea name="address" required rows="2" placeholder="Restaurant address"
+          class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-400"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-gray-300 mb-2">Phone Number</label>
+        <input type="text" name="phone" required maxlength="15" placeholder="Contact number"
+          class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-400">
+      </div>
+
+      <div>
+        <label class="block text-gray-300 mb-2">Cuisine Type</label>
+        <input type="text" name="cuisine" required placeholder="Eg: Indian, Chinese, Italian"
+          class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-400">
+      </div>
+
+      <div>
+        <label class="block text-gray-300 mb-2">Delivery Time (mins)</label>
+        <input type="number" name="delivery_time" required placeholder="Eg: 30"
+          class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-400">
+      </div>
+
+      <div>
+        <label class="block text-gray-300 mb-2">Image URL</label>
+        <input type="text" name="img" placeholder="Eg: Images/Restaurant/res-1.jpg"
+          class="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-400">
+      </div>
+
+      <button type="submit"
+        class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition">
+        ➕ Add Restaurant
+      </button>
+    </form>
+  `);
+}
+
+// ✅ Submit Handler
+$(document).on("submit", "#addRestaurantForm", function (e) {
+  e.preventDefault();
+
+  const formData = $(this).serialize();
+
+  $.ajax({
+    url: "http://localhost:8080/BiteBudddy/RestaurantServlet",
+    method: "POST",
+    data: formData + "&action=addRestaurant",
+    success: function (res) {
+      if (res.status === "success") {
+        Swal.fire({
+          title: "Restaurant Added!",
+          text: res.message,
+          icon: "success",
+          confirmButtonColor: "#f97316"
+        });
+        loadDashboard();
+      } else {
+        Swal.fire("Error", res.message, "error");
+      }
+    },
+    error: function () {
+      Swal.fire("Error", "Server error. Please try again later.", "error");
+    },
+  });
+});
+
+// ✅ Navigation Binding
+$("#addRestaurantLink").on("click", loadAddRestaurantForm);
+
+🧩 Step 2.2 — Create Model
+
+com.bite.model.Restaurant.java
+
+package com.bite.model;
+
+import java.util.Date;
+
+public class Restaurant {
+    private int restaurantId;
+    private int userId;
+    private String name;
+    private String address;
+    private String phoneNumber;
+    private String cuisineType;
+    private int deliveryTime;
+    private double rating;
+    private boolean isActive;
+    private boolean approvalStatusFromAdmin;
+    private String img;
+    private Date createdAt;
+
+    // Getters and Setters
+    public int getRestaurantId() { return restaurantId; }
+    public void setRestaurantId(int restaurantId) { this.restaurantId = restaurantId; }
+
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public String getCuisineType() { return cuisineType; }
+    public void setCuisineType(String cuisineType) { this.cuisineType = cuisineType; }
+
+    public int getDeliveryTime() { return deliveryTime; }
+    public void setDeliveryTime(int deliveryTime) { this.deliveryTime = deliveryTime; }
+
+    public double getRating() { return rating; }
+    public void setRating(double rating) { this.rating = rating; }
+
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean isActive) { this.isActive = isActive; }
+
+    public boolean isApprovalStatusFromAdmin() { return approvalStatusFromAdmin; }
+    public void setApprovalStatusFromAdmin(boolean approvalStatusFromAdmin) { this.approvalStatusFromAdmin = approvalStatusFromAdmin; }
+
+    public String getImg() { return img; }
+    public void setImg(String img) { this.img = img; }
+
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+}
+
+🧠 Step 2.3 — DAO Layer
+
+com.bite.dao.RestaurantDAO.java
+
+package com.bite.dao;
+
+import com.bite.model.Restaurant;
+import com.bite.util.DBConnection;
+import java.sql.*;
+
+public class RestaurantDAO {
+
+    public boolean addRestaurant(Restaurant restaurant) {
+        String sql = "INSERT INTO food.M_D_RESTAURANT (userid, name, address, phone_number, cuisine_type, delivery_time, img) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, restaurant.getUserId());
+            ps.setString(2, restaurant.getName());
+            ps.setString(3, restaurant.getAddress());
+            ps.setString(4, restaurant.getPhoneNumber());
+            ps.setString(5, restaurant.getCuisineType());
+            ps.setInt(6, restaurant.getDeliveryTime());
+            ps.setString(7, restaurant.getImg());
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+}
+
+🧩 Step 2.4 — Service Layer
+
+com.bite.service.RestaurantService.java
+
+package com.bite.service;
+
+import com.bite.dao.RestaurantDAO;
+import com.bite.model.Restaurant;
+import com.bite.model.ResponseMessage;
+
+public class RestaurantService {
+    private final RestaurantDAO dao = new RestaurantDAO();
+
+    public ResponseMessage<?> addRestaurant(Restaurant restaurant) {
+        boolean success = dao.addRestaurant(restaurant);
+        if (success) {
+            return new ResponseMessage<>("success", "Restaurant added successfully!");
+        } else {
+            return new ResponseMessage<>("error", "Failed to add restaurant.");
+        }
+    }
+}
+
+🧩 Step 2.5 — Servlet Layer
+
+com.bite.controller.RestaurantServlet.java
+
+package com.bite.controller;
+
+import com.bite.model.Restaurant;
+import com.bite.model.User;
+import com.bite.model.ResponseMessage;
+import com.bite.service.RestaurantService;
+import com.google.gson.Gson;
+
+import javax.servlet.http.*;
+import java.io.IOException;
+
+public class RestaurantServlet extends HttpServlet {
+    private final RestaurantService restaurantService = new RestaurantService();
+    private final Gson gson = new Gson();
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        resp.setContentType("application/json");
+        String action = req.getParameter("action");
+
+        if ("addRestaurant".equalsIgnoreCase(action)) {
+            HttpSession session = req.getSession(false);
+            if (session == null || session.getAttribute("user") == null) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                resp.getWriter().write("{\"status\":\"error\", \"message\":\"Not logged in.\"}");
+                return;
+            }
+
+            User user = (User) session.getAttribute("user");
+
+            Restaurant restaurant = new Restaurant();
+            restaurant.setUserId(user.getUserId());
+            restaurant.setName(req.getParameter("name"));
+            restaurant.setAddress(req.getParameter("address"));
+            restaurant.setPhoneNumber(req.getParameter("phone"));
+            restaurant.setCuisineType(req.getParameter("cuisine"));
+            restaurant.setDeliveryTime(Integer.parseInt(req.getParameter("delivery_time")));
+            restaurant.setImg(req.getParameter("img"));
+
+            ResponseMessage<?> result = restaurantService.addRestaurant(restaurant);
+            resp.getWriter().write(gson.toJson(result));
+        }
+    }
+}
+
+
+✅ What’s next (Step 3):
+We’ll add “My Restaurants” section — list restaurants belonging to the logged-in user, with options to edit, delete, and view menus.
+
+Would you like me to continue with Step 3 — My Restaurants (list + CRUD + Menu management)?
+
+You said:
+yes
+ChatGPT said:
+
+Perfect 🔥
+We’ll now implement Step 3 — “My Restaurants”
+This feature will let a logged-in restaurant owner:
+
+View all restaurants they created
+
+Edit or delete them
+
+Open each restaurant’s menu section for CRUD operations (next step)
+
+🧱 Step 3.1 — Front-end (Tailwind + External JS)
+
+In your restaurantDashboard.js, add this below the previous “Add Restaurant” code 👇
+
+// ✅ Load Restaurants List
+function loadRestaurants() {
+  $.ajax({
+    url: "http://localhost:8080/BiteBudddy/RestaurantServlet",
+    method: "GET",
+    data: { action: "listRestaurants" },
+    success: function (res) {
+      if (!res || res.length === 0) {
+        $("#mainContent").html(`<p class="text-center text-gray-400 mt-10">No restaurants found.</p>`);
+        return;
+      }
+
+      let html = `
+        <h2 class="text-3xl font-bold text-orange-400 mb-6">My Restaurants 🍴</h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      `;
+
+      res.forEach(r => {
+        html += `
+          <div class="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-5 hover:scale-[1.02] transition-transform">
+            <img src="${r.img || 'images/default-restaurant.jpg'}" class="rounded-lg h-40 w-full object-cover mb-4" />
+            <h3 class="text-xl font-semibold text-white mb-1">${r.name}</h3>
+            <p class="text-gray-400 text-sm">${r.cuisineType}</p>
+            <p class="text-gray-500 text-sm">${r.address}</p>
+            <div class="flex justify-between items-center mt-4">
+              <button class="editRestaurant bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-lg text-sm" data-id="${r.restaurantId}">Edit</button>
+              <button class="deleteRestaurant bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm" data-id="${r.restaurantId}">Delete</button>
+              <button class="menuRestaurant bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded-lg text-sm" data-id="${r.restaurantId}">Menus</button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += "</div>";
+      $("#mainContent").html(html);
+    },
+    error: function (xhr, status, err) {
+      Swal.fire("Error", "Could not load restaurants.", "error");
+    },
+  });
+}
+
+// ✅ Delete restaurant
+$(document).on("click", ".deleteRestaurant", function () {
+  const id = $(this).data("id");
+  Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to revert this!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#f97316",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Yes, delete it!"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      $.ajax({
+        url: "http://localhost:8080/BiteBudddy/RestaurantServlet",
+        method: "POST",
+        data: { action: "deleteRestaurant", restaurantId: id },
+        success: function (res) {
+          if (res.status === "success") {
+            Swal.fire("Deleted!", res.message, "success");
+            loadRestaurants();
+          } else {
+            Swal.fire("Error", res.message, "error");
+          }
+        },
+        error: function () {
+          Swal.fire("Error", "Failed to delete restaurant.", "error");
+        },
+      });
+    }
+  });
+});
+
+// ✅ Navigation Binding
+$("#restaurantsLink").on("click", loadRestaurants);
+
+🧩 Step 3.2 — Extend Model (already fine, no change)
+
+We’ll use the same Restaurant.java model.
+
+🧩 Step 3.3 — DAO Layer Update
+
+Add these new methods to RestaurantDAO.java 👇
+
+public List<Restaurant> getRestaurantsByUser(int userId) {
+    List<Restaurant> list = new ArrayList<>();
+    String sql = "SELECT * FROM food.M_D_RESTAURANT WHERE userid = ?";
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, userId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            Restaurant r = new Restaurant();
+            r.setRestaurantId(rs.getInt("restaurantid"));
+            r.setUserId(rs.getInt("userid"));
+            r.setName(rs.getString("name"));
+            r.setAddress(rs.getString("address"));
+            r.setPhoneNumber(rs.getString("phone_number"));
+            r.setCuisineType(rs.getString("cuisine_type"));
+            r.setDeliveryTime(rs.getInt("delivery_time"));
+            r.setImg(rs.getString("img"));
+            list.add(r);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return list;
+}
+
+public boolean deleteRestaurant(int restaurantId, int userId) {
+    String sql = "DELETE FROM food.M_D_RESTAURANT WHERE restaurantid = ? AND userid = ?";
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, restaurantId);
+        ps.setInt(2, userId);
+        return ps.executeUpdate() > 0;
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+
+🧩 Step 3.4 — Service Layer Update
+
+Add to RestaurantService.java:
+
+public List<Restaurant> getRestaurantsByUser(int userId) {
+    return dao.getRestaurantsByUser(userId);
+}
+
+public ResponseMessage<?> deleteRestaurant(int restaurantId, int userId) {
+    boolean success = dao.deleteRestaurant(restaurantId, userId);
+    if (success)
+        return new ResponseMessage<>("success", "Restaurant deleted successfully.");
+    else
+        return new ResponseMessage<>("error", "Failed to delete restaurant.");
+}
+
+🧩 Step 3.5 — Servlet Update
+
+Update RestaurantServlet.java:
+
+@Override
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    resp.setContentType("application/json");
+    String action = req.getParameter("action");
+
+    if ("listRestaurants".equalsIgnoreCase(action)) {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("user") == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"status\":\"error\",\"message\":\"Not logged in\"}");
+            return;
+        }
+
+        User user = (User) session.getAttribute("user");
+        List<Restaurant> list = restaurantService.getRestaurantsByUser(user.getUserId());
+        resp.getWriter().write(gson.toJson(list));
+    }
+}
+
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    resp.setContentType("application/json");
+    String action = req.getParameter("action");
+
+    if ("addRestaurant".equalsIgnoreCase(action)) {
+        // ... (existing add code)
+    } 
+    else if ("deleteRestaurant".equalsIgnoreCase(action)) {
+        HttpSession session = req.getSession(false);
+        if (session == null || session.getAttribute("user") == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"status\":\"error\",\"message\":\"Not logged in\"}");
+            return;
+        }
+
+        int restaurantId = Integer.parseInt(req.getParameter("restaurantId"));
+        int userId = ((User) session.getAttribute("user")).getUserId();
+
+        ResponseMessage<?> result = restaurantService.deleteRestaurant(restaurantId, userId);
+        resp.getWriter().write(gson.toJson(result));
+    }
+}
+
+
+✅ After this step,
+the restaurant owner can:
+
+Add new restaurants
+
+View all their restaurants
+
+Delete a restaurant
+
+Next, we’ll move to Step 4 — Menus CRUD (Add, Edit, Delete Menus per Restaurant)
+
+Would you like me to continue with that now?
+
+You said:
+yes
+ChatGPT said:
+
+Perfect! 🚀
+
+Now we’ll implement Step 4 — Menu CRUD for each restaurant. This allows the restaurant owner to:
+
+View menus for a selected restaurant
+
+Add new menu items
+
+Edit existing menu items
+
+Delete menu items
+
+🧱 Step 4.1 — Front-end (Tailwind + External JS)
+
+In restaurantDashboard.js, add this below the restaurant code:
+
+// ✅ Load Menus for a restaurant
+function loadMenus(restaurantId) {
+  $.ajax({
+    url: "http://localhost:8080/BiteBudddy/MenuServlet",
+    method: "GET",
+    data: { action: "listMenus", restaurantId: restaurantId },
+    success: function(res) {
+      if (!res || res.length === 0) {
+        $("#mainContent").html(`<p class="text-center text-gray-400 mt-10">No menu items found.</p>`);
+        return;
+      }
+
+      let html = `
+        <h2 class="text-3xl font-bold text-orange-400 mb-6">Menu Items 🍽️</h2>
+        <button id="addMenuBtn" data-restaurant="${restaurantId}" class="mb-4 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-white">Add New Menu</button>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      `;
+
+      res.forEach(m => {
+        html += `
+          <div class="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-5 hover:scale-[1.02] transition-transform">
+            <img src="${m.img || 'images/default-food.jpg'}" class="rounded-lg h-40 w-full object-cover mb-4" />
+            <h3 class="text-xl font-semibold text-white mb-1">${m.itemName}</h3>
+            <p class="text-gray-400 text-sm">${m.category}</p>
+            <p class="text-orange-300 font-bold">₹${m.price.toFixed(2)}</p>
+            <div class="flex justify-between items-center mt-4">
+              <button class="editMenu bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded-lg text-sm" data-id="${m.menuId}">Edit</button>
+              <button class="deleteMenu bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm" data-id="${m.menuId}">Delete</button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += "</div>";
+      $("#mainContent").html(html);
+    },
+    error: function() {
+      Swal.fire("Error", "Failed to load menu items.", "error");
+    }
+  });
+}
+
+// ✅ Add Menu
+$(document).on("click", "#addMenuBtn", function() {
+  const restaurantId = $(this).data("restaurant");
+  Swal.fire({
+    title: "Add Menu Item",
+    html:
+      `<input id="swal-itemName" class="swal2-input" placeholder="Item Name">
+       <input id="swal-category" class="swal2-input" placeholder="Category">
+       <input id="swal-price" type="number" class="swal2-input" placeholder="Price">
+       <input id="swal-description" class="swal2-input" placeholder="Description">
+       <input id="swal-img" class="swal2-input" placeholder="Image URL">`,
+    confirmButtonText: 'Add',
+    focusConfirm: false,
+    preConfirm: () => {
+      return {
+        restaurantId,
+        itemName: document.getElementById('swal-itemName').value,
+        category: document.getElementById('swal-category').value,
+        price: parseFloat(document.getElementById('swal-price').value),
+        description: document.getElementById('swal-description').value,
+        img: document.getElementById('swal-img').value
+      }
+    }
+  }).then((result) => {
+    if(result.isConfirmed) {
+      $.ajax({
+        url: "http://localhost:8080/BiteBudddy/MenuServlet",
+        method: "POST",
+        data: { action: "addMenu", ...result.value },
+        success: function(res) {
+          if(res.status === "success") {
+            Swal.fire("Added!", res.message, "success");
+            loadMenus(restaurantId);
+          } else {
+            Swal.fire("Error", res.message, "error");
+          }
+        },
+        error: function() {
+          Swal.fire("Error", "Failed to add menu item.", "error");
+        }
+      });
+    }
+  });
+});
+
+// ✅ Delete Menu
+$(document).on("click", ".deleteMenu", function() {
+  const menuId = $(this).data("id");
+  const restaurantId = $(this).closest('#mainContent').data('restaurant');
+  Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to revert this!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#f97316",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Yes, delete it!"
+  }).then((result) => {
+    if(result.isConfirmed){
+      $.ajax({
+        url: "http://localhost:8080/BiteBudddy/MenuServlet",
+        method: "POST",
+        data: { action: "deleteMenu", menuId },
+        success: function(res){
+          if(res.status === "success"){
+            Swal.fire("Deleted!", res.message, "success");
+            loadMenus(restaurantId);
+          } else {
+            Swal.fire("Error", res.message, "error");
+          }
+        },
+        error: function(){
+          Swal.fire("Error", "Failed to delete menu.", "error");
+        }
+      });
+    }
+  });
+});
+
+🧩 Step 4.2 — DAO Layer
+
+In MenuDAO.java, add:
+
+public List<Menu> getMenusByRestaurant(int restaurantId) {
+    List<Menu> list = new ArrayList<>();
+    String sql = "SELECT * FROM food.M_D_MENU WHERE restaurant_id=? AND is_deleted=0";
+    try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, restaurantId);
+        ResultSet rs = ps.executeQuery();
+        while(rs.next()) {
+            Menu m = new Menu();
+            m.setMenuId(rs.getInt("menu_id"));
+            m.setRestaurantId(rs.getInt("restaurant_id"));
+            m.setItemName(rs.getString("item_name"));
+            m.setCategory(rs.getString("category"));
+            m.setPrice(rs.getBigDecimal("price"));
+            m.setDescription(rs.getString("description"));
+            m.setImg(rs.getString("img"));
+            list.add(m);
+        }
+    } catch(Exception e){ e.printStackTrace(); }
+    return list;
+}
+
+public boolean deleteMenu(int menuId) {
+    String sql = "UPDATE food.M_D_MENU SET is_deleted=1 WHERE menu_id=?";
+    try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, menuId);
+        return ps.executeUpdate() > 0;
+    } catch(Exception e){ e.printStackTrace(); }
+    return false;
+}
+
+public boolean addMenu(Menu m) {
+    String sql = "INSERT INTO food.M_D_MENU (restaurant_id, item_name, description, category, price, img) VALUES (?,?,?,?,?,?)";
+    try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, m.getRestaurantId());
+        ps.setString(2, m.getItemName());
+        ps.setString(3, m.getDescription());
+        ps.setString(4, m.getCategory());
+        ps.setBigDecimal(5, m.getPrice());
+        ps.setString(6, m.getImg());
+        return ps.executeUpdate() > 0;
+    } catch(Exception e){ e.printStackTrace(); }
+    return false;
+}
+
+🧩 Step 4.3 — Service Layer
+public List<Menu> getMenusByRestaurant(int restaurantId) {
+    return dao.getMenusByRestaurant(restaurantId);
+}
+
+public ResponseMessage<?> deleteMenu(int menuId) {
+    boolean success = dao.deleteMenu(menuId);
+    if(success) return new ResponseMessage<>("success", "Menu item deleted successfully.");
+    else return new ResponseMessage<>("error", "Failed to delete menu item.");
+}
+
+public ResponseMessage<?> addMenu(Menu m) {
+    boolean success = dao.addMenu(m);
+    if(success) return new ResponseMessage<>("success", "Menu item added successfully.");
+    else return new ResponseMessage<>("error", "Failed to add menu item.");
+}
+
+🧩 Step 4.4 — Servlet
+
+MenuServlet.java:
+
+@Override
+protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    resp.setContentType("application/json");
+    String action = req.getParameter("action");
+
+    if("listMenus".equalsIgnoreCase(action)) {
+        int restaurantId = Integer.parseInt(req.getParameter("restaurantId"));
+        List<Menu> menus = menuService.getMenusByRestaurant(restaurantId);
+        resp.getWriter().write(gson.toJson(menus));
+    }
+}
+
+@Override
+protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    resp.setContentType("application/json");
+    String action = req.getParameter("action");
+
+    if("deleteMenu".equalsIgnoreCase(action)) {
+        int menuId = Integer.parseInt(req.getParameter("menuId"));
+        ResponseMessage<?> result = menuService.deleteMenu(menuId);
+        resp.getWriter().write(gson.toJson(result));
+    } else if("addMenu".equalsIgnoreCase(action)) {
+        Menu m = new Menu();
+        m.setRestaurantId(Integer.parseInt(req.getParameter("restaurantId")));
+        m.setItemName(req.getParameter("itemName"));
+        m.setCategory(req.getParameter("category"));
+        m.setPrice(new BigDecimal(req.getParameter("price")));
+        m.setDescription(req.getParameter("description"));
+        m.setImg(req.getParameter("img"));
+
+        ResponseMessage<?> result = menuService.addMenu(m);
+        resp.getWriter().write(gson.toJson(result));
+    }
+}
+
+
+✅ After Step 4, the restaurant owner can:
+
+View menus of each restaurant
+
+Add new menu items
+
+Delete menu items
+
+Next step will be editing menu items and updating restaurant info.
+
+Do you want me to implement Edit Menu and Edit Restaurant next?
+
+You said:
+yes
+ChatGPT said:
+
+Perfect! 🚀 Let’s implement Step 5 — Edit Menu & Edit Restaurant functionality for the restaurant owner portal.
+
+🧱 Step 5.1 — Front-end JS (restaurantDashboard.js)
+// ✅ Edit Menu
+$(document).on("click", ".editMenu", function() {
+    const menuId = $(this).data("id");
+    
+    // First, get existing menu details
+    $.ajax({
+        url: "http://localhost:8080/BiteBudddy/MenuServlet",
+        method: "GET",
+        data: { action: "getMenu", menuId },
+        success: function(m) {
+            Swal.fire({
+                title: "Edit Menu Item",
+                html:
+                    `<input id="swal-itemName" class="swal2-input" placeholder="Item Name" value="${m.itemName}">
+                     <input id="swal-category" class="swal2-input" placeholder="Category" value="${m.category}">
+                     <input id="swal-price" type="number" class="swal2-input" placeholder="Price" value="${m.price}">
+                     <input id="swal-description" class="swal2-input" placeholder="Description" value="${m.description}">
+                     <input id="swal-img" class="swal2-input" placeholder="Image URL" value="${m.img}">`,
+                confirmButtonText: 'Update',
+                focusConfirm: false,
+                preConfirm: () => {
+                    return {
+                        menuId,
+                        itemName: document.getElementById('swal-itemName').value,
+                        category: document.getElementById('swal-category').value,
+                        price: parseFloat(document.getElementById('swal-price').value),
+                        description: document.getElementById('swal-description').value,
+                        img: document.getElementById('swal-img').value
+                    }
+                }
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    $.ajax({
+                        url: "http://localhost:8080/BiteBudddy/MenuServlet",
+                        method: "POST",
+                        data: { action: "editMenu", ...result.value },
+                        success: function(res) {
+                            if(res.status === "success") {
+                                Swal.fire("Updated!", res.message, "success");
+                                loadMenus(m.restaurantId);
+                            } else {
+                                Swal.fire("Error", res.message, "error");
+                            }
+                        },
+                        error: function() {
+                            Swal.fire("Error", "Failed to update menu.", "error");
+                        }
+                    });
+                }
+            });
+        },
+        error: function() {
+            Swal.fire("Error", "Failed to load menu details.", "error");
+        }
+    });
+});
+
+// ✅ Edit Restaurant
+$(document).on("click", ".editRestaurant", function() {
+    const restaurantId = $(this).data("id");
+
+    // Get restaurant details first
+    $.ajax({
+        url: "http://localhost:8080/BiteBudddy/RestaurantServlet",
+        method: "GET",
+        data: { action: "getRestaurant", restaurantId },
+        success: function(r) {
+            Swal.fire({
+                title: "Edit Restaurant",
+                html:
+                    `<input id="swal-name" class="swal2-input" placeholder="Restaurant Name" value="${r.name}">
+                     <input id="swal-address" class="swal2-input" placeholder="Address" value="${r.address}">
+                     <input id="swal-phone" class="swal2-input" placeholder="Phone Number" value="${r.phoneNumber}">
+                     <input id="swal-cuisine" class="swal2-input" placeholder="Cuisine Type" value="${r.cuisineType}">
+                     <input id="swal-delivery" type="number" class="swal2-input" placeholder="Delivery Time" value="${r.deliveryTime}">`,
+                confirmButtonText: 'Update',
+                focusConfirm: false,
+                preConfirm: () => {
+                    return {
+                        restaurantId,
+                        name: document.getElementById('swal-name').value,
+                        address: document.getElementById('swal-address').value,
+                        phoneNumber: document.getElementById('swal-phone').value,
+                        cuisineType: document.getElementById('swal-cuisine').value,
+                        deliveryTime: parseInt(document.getElementById('swal-delivery').value)
+                    }
+                }
+            }).then((result) => {
+                if(result.isConfirmed) {
+                    $.ajax({
+                        url: "http://localhost:8080/BiteBudddy/RestaurantServlet",
+                        method: "POST",
+                        data: { action: "editRestaurant", ...result.value },
+                        success: function(res) {
+                            if(res.status === "success") {
+                                Swal.fire("Updated!", res.message, "success");
+                                loadRestaurants(); // reload the restaurant list
+                            } else {
+                                Swal.fire("Error", res.message, "error");
+                            }
+                        },
+                        error: function() {
+                            Swal.fire("Error", "Failed to update restaurant.", "error");
+                        }
+                    });
+                }
+            });
+        },
+        error: function() {
+            Swal.fire("Error", "Failed to load restaurant details.", "error");
+        }
+    });
+});
+
+🧩 Step 5.2 — DAO Layer
+
+MenuDAO.java — add:
+
+public Menu getMenuById(int menuId) {
+    Menu m = null;
+    String sql = "SELECT * FROM food.M_D_MENU WHERE menu_id=? AND is_deleted=0";
+    try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, menuId);
+        ResultSet rs = ps.executeQuery();
+        if(rs.next()) {
+            m = new Menu();
+            m.setMenuId(rs.getInt("menu_id"));
+            m.setRestaurantId(rs.getInt("restaurant_id"));
+            m.setItemName(rs.getString("item_name"));
+            m.setCategory(rs.getString("category"));
+            m.setPrice(rs.getBigDecimal("price"));
+            m.setDescription(rs.getString("description"));
+            m.setImg(rs.getString("img"));
+        }
+    } catch(Exception e){ e.printStackTrace(); }
+    return m;
+}
+
+public boolean editMenu(Menu m) {
+    String sql = "UPDATE food.M_D_MENU SET item_name=?, category=?, price=?, description=?, img=?, updated_at=GETDATE() WHERE menu_id=?";
+    try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, m.getItemName());
+        ps.setString(2, m.getCategory());
+        ps.setBigDecimal(3, m.getPrice());
+        ps.setString(4, m.getDescription());
+        ps.setString(5, m.getImg());
+        ps.setInt(6, m.getMenuId());
+        return ps.executeUpdate() > 0;
+    } catch(Exception e){ e.printStackTrace(); }
+    return false;
+}
+
+
+RestaurantDAO.java — add:
+
+public Restaurant getRestaurantById(int restaurantId) {
+    Restaurant r = null;
+    String sql = "SELECT * FROM food.M_D_RESTAURANT WHERE restaurant_id=? AND is_deleted=0";
+    try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, restaurantId);
+        ResultSet rs = ps.executeQuery();
+        if(rs.next()) {
+            r = new Restaurant();
+            r.setRestaurantId(rs.getInt("restaurant_id"));
+            r.setUserid(rs.getInt("userid"));
+            r.setName(rs.getString("name"));
+            r.setAddress(rs.getString("address"));
+            r.setPhoneNumber(rs.getString("phone_number"));
+            r.setCuisineType(rs.getString("cuisine_type"));
+            r.setDeliveryTime(rs.getInt("delivery_time"));
+            r.setRating(rs.getBigDecimal("rating"));
+        }
+    } catch(Exception e){ e.printStackTrace(); }
+    return r;
+}
+
+public boolean editRestaurant(Restaurant r) {
+    String sql = "UPDATE food.M_D_RESTAURANT SET name=?, address=?, phone_number=?, cuisine_type=?, delivery_time=?, updated_at=GETDATE() WHERE restaurant_id=?";
+    try(Connection conn = DBConnection.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, r.getName());
+        ps.setString(2, r.getAddress());
+        ps.setString(3, r.getPhoneNumber());
+        ps.setString(4, r.getCuisineType());
+        ps.setInt(5, r.getDeliveryTime());
+        ps.setInt(6, r.getRestaurantId());
+        return ps.executeUpdate() > 0;
+    } catch(Exception e){ e.printStackTrace(); }
+    return false;
+}
+
+🧩 Step 5.3 — Service Layer
+public Menu getMenuById(int menuId) {
+    return dao.getMenuById(menuId);
+}
+
+public ResponseMessage<?> editMenu(Menu m) {
+    boolean success = dao.editMenu(m);
+    if(success) return new ResponseMessage<>("success", "Menu updated successfully.");
+    else return new ResponseMessage<>("error", "Failed to update menu.");
+}
+
+public Restaurant getRestaurantById(int restaurantId) {
+    return dao.getRestaurantById(restaurantId);
+}
+
+public ResponseMessage<?> editRestaurant(Restaurant r) {
+    boolean success = dao.editRestaurant(r);
+    if(success) return new ResponseMessage<>("success", "Restaurant updated successfully.");
+    else return new ResponseMessage<>("error", "Failed to update restaurant.");
+}
+
+🧩 Step 5.4 — Servlet Layer
+
+MenuServlet.java — add:
+
+if("getMenu".equalsIgnoreCase(action)) {
+    int menuId = Integer.parseInt(req.getParameter("menuId"));
+    Menu m = menuService.getMenuById(menuId);
+    resp.getWriter().write(gson.toJson(m));
+} else if("editMenu".equalsIgnoreCase(action)) {
+    Menu m = new Menu();
+    m.setMenuId(Integer.parseInt(req.getParameter("menuId")));
+    m.setItemName(req.getParameter("itemName"));
+    m.setCategory(req.getParameter("category"));
+    m.setPrice(new BigDecimal(req.getParameter("price")));
+    m.setDescription(req.getParameter("description"));
+    m.setImg(req.getParameter("img"));
+    ResponseMessage<?> result = menuService.editMenu(m);
+    resp.getWriter().write(gson.toJson(result));
+}
+
+
+RestaurantServlet.java — add:
+
+if("getRestaurant".equalsIgnoreCase(action)) {
+    int restaurantId = Integer.parseInt(req.getParameter("restaurantId"));
+    Restaurant r = restaurantService.getRestaurantById(restaurantId);
+    resp.getWriter().write(gson.toJson(r));
+} else if("editRestaurant".equalsIgnoreCase(action)) {
+    Restaurant r = new Restaurant();
+    r.setRestaurantId(Integer.parseInt(req.getParameter("restaurantId")));
+    r.setName(req.getParameter("name"));
+    r.setAddress(req.getParameter("address"));
+    r.setPhoneNumber(req.getParameter("phoneNumber"));
+    r.setCuisineType(req.getParameter("cuisineType"));
+    r.setDeliveryTime(Integer.parseInt(req.getParameter("deliveryTime")));
+    ResponseMessage<?> result = restaurantService.editRestaurant(r);
+    resp.getWriter().write(gson.toJson(result));
+}
+
+
+✅ After Step 5, the restaurant owner can:
+
+Edit any menu item
+
+Edit any restaurant info
+
+Next step will be Add New Restaurant, then dashboard stats (revenue, number of restaurants, etc.).
+
+Do you want me to implement Add New Restaurant now?
