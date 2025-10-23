@@ -229,3 +229,314 @@ $("#confirmOrder").on("click", function () {
 });
 
 });
+
+
+
+Excellent 👍 You’ve built a **complete cart system** — now let’s make it look and feel like a **real-world e-commerce experience** (like Swiggy or Zomato).
+
+We’ll upgrade your current script to use:
+
+* ✅ **SweetAlert2** → for all `alert()` & `confirm()`
+* ✅ **Toastify.js** → for quick toast notifications
+* ✅ Same Tailwind layout — no extra CSS needed
+
+---
+
+### 🧩 Step 1: Add these libraries
+
+Put this **before your JS script** (in your HTML):
+
+```html
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Toastify -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+```
+
+---
+
+### ⚡ Step 2: Replace your `<script>` with this version
+
+Here’s your **updated and enhanced** Cart JS file 👇
+(It keeps your logic, but replaces all alerts/confirms with SweetAlert + Toastify.)
+
+```js
+$(document).ready(function () {
+  const $cartContainer = $("#cartContainer");
+  const $grandTotal = $("#grandTotal");
+  const $selectedCount = $("#selectedCount");
+  const $placeOrder = $("#placeOrder");
+
+  // Toastify helper
+  function toast(message, color = "#ff7f50") {
+    Toastify({
+      text: message,
+      duration: 3000,
+      close: true,
+      gravity: "top",
+      position: "right",
+      backgroundColor: color,
+      stopOnFocus: true,
+    }).showToast();
+  }
+
+  // Load cart items from backend
+  function loadCart() {
+    $.ajax({
+      url: "http://localhost:8080/BiteBudddy/CartApiServlet",
+      method: "GET",
+      dataType: "json",
+      success: function (data) {
+        renderCart(data);
+        updateTotals();
+      },
+      error: function (xhr) {
+        if (xhr.status === 401) {
+          Swal.fire({
+            title: "Login Required",
+            text: "Please log in to view your cart.",
+            icon: "warning",
+            confirmButtonColor: "#ff7f50",
+          }).then(() => {
+            window.location.href = "/login.html";
+          });
+        } else {
+          $cartContainer.html(`<p class="text-center text-red-400">Failed to load cart.</p>`);
+        }
+      },
+    });
+  }
+
+  // Render cart items list
+  function renderCart(items) {
+    $cartContainer.empty();
+    if (!items || items.length === 0) {
+      $cartContainer.html(`<p class="text-center text-gray-400">Your cart is empty.</p>`);
+      return;
+    }
+
+    items.forEach(item => {
+      const itemTotal = (item.price * item.quantity).toFixed(2);
+      const card = $(`
+        <div class="bg-white/5 border border-white/6 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 hover:scale-[1.02] transition-transform">
+          <div class="flex items-center gap-4 w-full md:w-3/4">
+            <input type="checkbox" class="select-item w-5 h-5 accent-orange-500" data-id="${item.cartId}">
+            <img src="${item.imagePath || '/assets/no-image.png'}" alt="${escapeHtml(item.itemName)}" class="cart-img shadow-lg">
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-orange-300">${escapeHtml(item.itemName)}</h3>
+              <p class="text-sm text-gray-300">₹${item.price.toFixed(2)} Each</p>
+              <p class="text-sm text-gray-400 mt-1">Restaurant: ${item.name}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+            <div class="flex items-center gap-2 bg-white/3 rounded-lg px-3 py-1">
+              <button class="decrease px-3 py-1 rounded bg-white/6 hover:bg-white/10" data-id="${item.cartId}">-</button>
+              <span class="quantity font-semibold" id="qty-${item.cartId}">${item.quantity}</span>
+              <button class="increase px-3 py-1 rounded bg-white/6 hover:bg-white/10" data-id="${item.cartId}">+</button>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-gray-300">Total</p>
+              <p class="text-lg font-bold"><span id="total-${item.cartId}">${itemTotal}</span></p>
+              <button class="remove mt-2 text-sm text-red-400 hover:text-red-500" data-id="${item.cartId}">Remove</button>
+            </div>
+          </div>
+        </div>
+      `);
+      $cartContainer.append(card);
+    });
+  }
+
+  // Escape HTML
+  function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"'`=\/]/g, s =>
+      ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;',
+        '"': '&quot;', "'": '&#39;', '/': '&#x2F;',
+        '`': '&#x60;', '=': '&#x3D;'
+      })[s]
+    );
+  }
+
+  // Update totals
+  function updateTotals() {
+    let total = 0;
+    let count = 0;
+    $(".select-item:checked").each(function () {
+      const id = $(this).data("id");
+      const qty = parseInt($(`#qty-${id}`).text(), 10);
+      const priceText = $(`#total-${id}`).text();
+      const price = parseFloat(priceText) / (qty || 1);
+      total += price * qty;
+      count++;
+    });
+    $grandTotal.text(total.toFixed(2));
+    $selectedCount.text(count);
+    $placeOrder.prop("disabled", count === 0);
+  }
+
+  // Increase quantity
+  $cartContainer.on("click", ".increase", function () {
+    const cartId = $(this).data("id");
+    const $qtySpan = $(`#qty-${cartId}`);
+    let qty = parseInt($qtySpan.text(), 10);
+    qty++;
+    updateQuantityAjax(cartId, qty);
+  });
+
+  // Decrease quantity
+  $cartContainer.on("click", ".decrease", function () {
+    const cartId = $(this).data("id");
+    const $qtySpan = $(`#qty-${cartId}`);
+    let qty = parseInt($qtySpan.text(), 10);
+    if (qty > 1) {
+      qty--;
+      updateQuantityAjax(cartId, qty);
+    }
+  });
+
+  // Remove item with SweetAlert confirm
+  $cartContainer.on("click", ".remove", function () {
+    const cartId = $(this).data("id");
+
+    Swal.fire({
+      title: "Remove Item?",
+      text: "Do you really want to remove this item from your cart?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, remove it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=delete",
+          method: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({ cart_id: cartId }),
+          success: function (res) {
+            if (res.success) {
+              toast("Item removed from cart!", "#4caf50");
+              loadCart();
+            } else {
+              toast(res.message || "Failed to remove item.", "#ff5252");
+            }
+          },
+          error: function () {
+            toast("Server error while removing item.", "#ff5252");
+          }
+        });
+      }
+    });
+  });
+
+  // Checkbox change
+  $cartContainer.on("change", ".select-item", updateTotals);
+
+  // Update quantity AJAX
+  function updateQuantityAjax(cartId, qty) {
+    $.ajax({
+      url: "http://localhost:8080/BiteBudddy/CartApiServlet?action=update",
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ cart_id: cartId, quantity: qty }),
+      success: function (res) {
+        if (res.success) {
+          $(`#qty-${cartId}`).text(qty);
+          if (res.itemTotal !== undefined) {
+            $(`#total-${cartId}`).text(res.itemTotal.toFixed(2));
+          } else {
+            loadCart();
+          }
+          updateTotals();
+          toast("Quantity updated!", "#4caf50");
+        } else {
+          toast(res.message || "Failed to update quantity.", "#ff5252");
+        }
+      },
+      error: function () {
+        toast("Error updating quantity.", "#ff5252");
+      }
+    });
+  }
+
+  // Place Order Modal
+  $("#placeOrder").on("click", function () {
+    const selectedItems = $(".select-item:checked");
+    if (selectedItems.length === 0) {
+      toast("Please select at least one item.", "#ff5252");
+      return;
+    }
+    $("#orderModal").removeClass("hidden");
+  });
+
+  // Cancel modal
+  $("#cancelOrder").on("click", function () {
+    $("#orderModal").addClass("hidden");
+  });
+
+  // Confirm order
+  $("#confirmOrder").on("click", function () {
+    const address = $("#shippingAddress").val().trim();
+    const payment = $("#paymentMode").val();
+
+    if (!address || !payment) {
+      toast("Please fill in both address and payment method.", "#ff5252");
+      return;
+    }
+
+    const selectedIds = [];
+    $(".select-item:checked").each(function () {
+      selectedIds.push($(this).data("id"));
+    });
+
+    $.ajax({
+      url: "http://localhost:8080/BiteBudddy/OrderServlet",
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({
+        cartIds: selectedIds,
+        address: address,
+        paymentMode: payment
+      }),
+      success: function (res) {
+        if (res.success) {
+          $("#orderModal").addClass("hidden");
+          Swal.fire({
+            title: "Order Placed!",
+            text: "Your order has been placed successfully.",
+            icon: "success",
+            confirmButtonColor: "#ff7f50",
+          }).then(() => {
+            window.location.href = "restaurant.html";
+          });
+        } else {
+          toast(res.message || "Failed to place order.", "#ff5252");
+        }
+      },
+      error: function () {
+        toast("Server error while placing order.", "#ff5252");
+      }
+    });
+  });
+
+  // Initial load
+  loadCart();
+});
+```
+
+---
+
+### 💫 Result
+
+* ❌ No ugly `alert()` or `confirm()` popups
+* ✅ Beautiful SweetAlert confirmation modals
+* ✅ Smooth Toast notifications for success/error
+* ✅ Tailwind animations preserved
+
+---
+
+Would you like me to also make your **order modal** (the HTML inside `#orderModal`) look more modern with Tailwind + animations + prefilled address/payment selection dropdown?
