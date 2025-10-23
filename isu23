@@ -86,3 +86,70 @@ public class UpdateUserServlet extends HttpServlet {
         }
     }
 }
+
+
+
+package com.bite.controller;
+
+import java.io.IOException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import com.bite.dao.UserDAO;
+import com.bite.model.User;
+import com.bite.util.RequestBodyParser;
+import com.google.gson.JsonObject;
+
+public class UpdateUserServlet extends HttpServlet {
+    private final UserDAO dao = new UserDAO();
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        resp.setContentType("application/json");
+        HttpSession session = req.getSession(false);
+
+        // ✅ Ensure user is logged in
+        if (session == null || session.getAttribute("user") == null) {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            resp.getWriter().write("{\"success\":false, \"message\":\"Not authenticated\"}");
+            return;
+        }
+
+        // ✅ Get the logged-in user
+        User user = (User) session.getAttribute("user");
+        int userId = user.getUserId();
+
+        // ✅ Parse JSON request body using your utility
+        JsonObject json = RequestBodyParser.ParseJson(req);
+
+        String phoneNumber = json.has("phonenumber") ? json.get("phonenumber").getAsString() : null;
+        String address = json.has("address") ? json.get("address").getAsString() : null;
+
+        // ✅ Validation
+        if (address == null || address.trim().isEmpty()) {
+            resp.getWriter().write("{\"success\":false, \"message\":\"Address is required\"}");
+            return;
+        }
+
+        if (phoneNumber != null && phoneNumber.length() > 15) {
+            resp.getWriter().write("{\"success\":false, \"message\":\"Invalid phone number\"}");
+            return;
+        }
+
+        // ✅ Update user contact details
+        boolean updated = dao.updateUserContact(userId, phoneNumber, address);
+
+        if (updated) {
+            // ✅ Update session object also (so UI shows new data immediately)
+            user.setPhoneNumber(phoneNumber);
+            user.setAddress(address);
+            session.setAttribute("user", user);
+
+            resp.getWriter().write("{\"success\":true, \"message\":\"Profile updated successfully\"}");
+        } else {
+            resp.getWriter().write("{\"success\":false, \"message\":\"Update failed\"}");
+        }
+    }
+}
